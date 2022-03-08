@@ -11,13 +11,14 @@ todo_db = "todo.db"  # db file path
 
 # adding arguments
 parser = argparse.ArgumentParser()
+par = parser.add_mutually_exclusive_group()
 
-parser.add_argument("-ls", "--list", dest="list", action='store_true', help="show all todos sorted by added date desc.")
-parser.add_argument("-a", "--add", dest="add", help="add todo (params: title)")
-parser.add_argument("-e", "--edit", nargs='+', dest="edit", help="edit todo (params: id, title)")
-parser.add_argument("-d", "--delete", dest="delete", help="delete todo (params: id, title)")
-parser.add_argument("-t", "--toggle", dest="toggle", help="toggle done state: True/False (params: id, title)")
-parser.add_argument("-s", "--search", dest="search", help="search todo titles for inserted string "
+par.add_argument("-ls", "--list", dest="list", action='store_true', help="show all todos sorted by added date desc.")
+par.add_argument("-a", "--add", dest="add", help="add todo (params: title)")
+par.add_argument("-e", "--edit", nargs='+', dest="edit", help="edit todo (params: id, title)")
+par.add_argument("-d", "--delete", dest="delete", help="delete todo (params: id, title)")
+par.add_argument("-t", "--toggle", dest="toggle", help="toggle done state: True/False (params: id, title)")
+par.add_argument("-s", "--search", dest="search", help="search todo titles for inserted string "
                                                           "(params: <search string>)")
 """
 the -h/---help argument is already present in this library
@@ -89,6 +90,7 @@ if __name__ == '__main__':
                 'timestamp': get_timestamp()}
         todo_list.append(todo)
         write_to_file(todo_list)
+        print('Todo added')
 
     if args.edit:
         todo_id = validate_id(args.edit[0])
@@ -97,16 +99,41 @@ if __name__ == '__main__':
             if len(title) > 4:
                 todo_list[todo_id - 1]['title'] = title
                 write_to_file(todo_list)
+                print('Todo edited.')
             else:
                 print('Title must be 5 or more characters')
         else:
             print("No todo to edit or ID not valid.")
 
     if args.delete:
-        pass
+        todo_id = validate_id(args.delete)
+        if todo_present and todo_id:
+            todo_list.pop(todo_id-1)
+            id_inc = 1
+            for td in todo_list: #reorders ids
+                td['id'] = id_inc
+                id_inc += 1
+            write_to_file(todo_list)
+            print('Todo deleted.')
+        else:
+            print("No todo to edit or ID not valid.")
 
     if args.toggle:
-        pass
+        todo_id = validate_id(args.toggle)
+        if todo_present and todo_id:
+            todo_list[todo_id-1]['done'] = not todo_list[todo_id-1]['done']
+            write_to_file(todo_list)
+            print('Note state toggled')
+        else:
+            print("No todo to edit or ID not valid.")
 
     if args.search:
-        pass
+        temp_list = []
+        for tn in todo_list:
+            if args.search in tn['title']:
+                temp_list.append(tn)
+        if len(temp_list) > 0:
+            print("Search result: ")
+            print(temp_list)
+        else:
+            print("No result found")
